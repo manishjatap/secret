@@ -72,6 +72,11 @@ func FindVault(encodingkey, filepath string) (Vault, error) {
 		regx := regexp.MustCompile(`(.*?)=`)
 
 		key := regx.FindString(plaintext)
+
+		if len(key) == 0 {
+			return myVault, errors.New("Invalid encoding-key provided")
+		}
+
 		key = key[:len(key)-1] // removing '=' operator from string
 
 		value := plaintext[len(key)+1:]
