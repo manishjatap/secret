@@ -2,27 +2,40 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"os"
 
-	"github.com/manishj/secret/encrypt"
+	"github.com/manishjagtap/secret/vault"
 )
 
 func main() {
-	fmt.Println("hello")
-	ciphertext, err := encrypt.Encrypt("test", "hello")
+	const encodingkey string = "key"
+
+	path, err := os.Getwd()
+
+	v, err := vault.FindVault(encodingkey, string(path+"/secret.txt"))
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
-	fmt.Println(ciphertext)
-
-	plaintext, err := encrypt.Decrypt("test", ciphertext)
-
-	if err != nil {
-		log.Fatal(err)
+	if err := v.Set("twitter_api_key", "my_secret_twitter_key"); err != nil {
+		fmt.Println(err)
 	}
 
-	fmt.Println(plaintext)
+	if err := v.Set("facebook_api_key", "my_secret_facebook_key"); err != nil {
+		fmt.Println(err)
+	}
+
+	if value, err := v.Get("facebook_api_key"); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("facebook_api_key", value)
+	}
+
+	if value, err := v.Get("twitter_api_key"); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("twitter_api_key", value)
+	}
 
 }
