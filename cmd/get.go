@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/manishjagtap/secret/vault"
 	"github.com/spf13/cobra"
@@ -17,11 +16,11 @@ var GetCmd = &cobra.Command{
 
 		key := args[0]
 
-		if path, err := os.Getwd(); err == nil {
-			path = string(path + "/secret.txt")
+		if path, err := getPath(); err == nil {
 			if secretVault, err := vault.FindVault(encodingkey, path); err == nil {
+				fmt.Println(secretVault)
 				if value, err := secretVault.Get(key); err == nil {
-					fmt.Printf("Key: %v, Value: %v", key, value)
+					fmt.Printf("{'%v':'%v'}\n", key, value)
 				} else {
 					fmt.Println(err)
 				}

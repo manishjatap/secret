@@ -6,7 +6,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/manishjagtap/secret/encrypt"
+	"github.com/manishjagtap/secret/cryptosec"
 )
 
 //Vault : struct type
@@ -14,6 +14,26 @@ type Vault struct {
 	filepath    string
 	encodingkey string
 	data        map[string]string
+}
+
+var encryptData = func(key, plaintext string) (string, error) {
+	return cryptosec.Encrypt(key, plaintext)
+}
+
+var decryptData = func(key, ciphertext string) (string, error) {
+	return cryptosec.Decrypt(key, ciphertext)
+}
+
+var writeDataToFile = func(f *os.File, data string) (int, error) {
+	return f.WriteString(data)
+}
+
+var openFile = func(name string, flag int, perm os.FileMode) (*os.File, error) {
+	return os.OpenFile(name, flag, perm)
+}
+
+var getNewScanner = func(f *os.File) *bufio.Scanner {
+	return bufio.NewScanner(f)
 }
 
 //Get : return the key
@@ -31,7 +51,7 @@ func (v Vault) Set(key, value string) error {
 	v.data[key] = value
 
 	//enrypt the data to be stored in the file
-	cipherData, err := encrypt.Encrypt(v.encodingkey, key+"="+value)
+	cipherData, err := encryptData(v.encodingkey, key+"="+value)
 
 	if err != nil {
 		return err
@@ -51,7 +71,7 @@ func FindVault(encodingkey, filepath string) (Vault, error) {
 	var myVault Vault
 	myVault.data = make(map[string]string)
 
-	file, err := os.Open(filepath)
+	file, err := openFile(filepath, os.O_RDONLY, 0777)
 
 	if err != nil {
 		return myVault, err
@@ -61,9 +81,9 @@ func FindVault(encodingkey, filepath string) (Vault, error) {
 	myVault.filepath = filepath
 	myVault.encodingkey = encodingkey
 
-	sc := bufio.NewScanner(file)
+	sc := getNewScanner(file)
 	for sc.Scan() {
-		plaintext, err := encrypt.Decrypt(encodingkey, sc.Text())
+		plaintext, err := decryptData(encodingkey, sc.Text())
 
 		if err != nil {
 			return myVault, err
@@ -89,8 +109,8 @@ func FindVault(encodingkey, filepath string) (Vault, error) {
 
 //updateVault : This is for internal use
 func updateVault(data, filepath string) error {
-	if file, err := os.OpenFile(filepath, os.O_APPEND|os.O_WRONLY, 0777); err == nil {
-		if _, err := file.WriteString(data + "\n"); err != nil {
+	if file, err := openFile(filepath, os.O_APPEND|os.O_WRONLY, 0777); err == nil {
+		if _, err := writeDataToFile(file, data+"\n"); err != nil {
 			return err
 		}
 	} else {
