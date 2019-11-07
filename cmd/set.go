@@ -7,6 +7,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var setValue = func(secretVault vault.Vault, key string, value string) error {
+	return secretVault.Set(key, value)
+}
+
 //SetCmd : Store the key into a secret vault
 var SetCmd = &cobra.Command{
 	Use:   "set",
@@ -18,8 +22,8 @@ var SetCmd = &cobra.Command{
 		value := args[1]
 
 		if path, err := getPath(); err == nil {
-			if secretVault, err := vault.FindVault(encodingkey, path); err == nil {
-				if err := secretVault.Set(key, value); err == nil {
+			if secretVault, err := findVault(encodingkey, path); err == nil {
+				if err := setValue(secretVault, key, value); err == nil {
 					fmt.Printf("`%v` successfully added to vault\n", key)
 				} else {
 					fmt.Println(err)

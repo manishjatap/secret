@@ -7,6 +7,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var getValue = func(secretVault vault.Vault, key string) (string, error) {
+	return secretVault.Get(key)
+}
+
 //GetCmd : Fetch the key from a secret vault
 var GetCmd = &cobra.Command{
 	Use:   "get",
@@ -17,9 +21,8 @@ var GetCmd = &cobra.Command{
 		key := args[0]
 
 		if path, err := getPath(); err == nil {
-			if secretVault, err := vault.FindVault(encodingkey, path); err == nil {
-				fmt.Println(secretVault)
-				if value, err := secretVault.Get(key); err == nil {
+			if secretVault, err := findVault(encodingkey, path); err == nil {
+				if value, err := getValue(secretVault, key); err == nil {
 					fmt.Printf("{'%v':'%v'}\n", key, value)
 				} else {
 					fmt.Println(err)

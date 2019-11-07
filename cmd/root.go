@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/manishjagtap/secret/vault"
 	"github.com/spf13/cobra"
 )
 
@@ -18,12 +19,13 @@ var getWorkingDirectory = func() (string, error) {
 	return os.Getwd()
 }
 
-// var directoryStatus(filePath string) (*os.FileInfo, errors) {
-// 	return os.Stat(dir)
-// }
+var directoryStatus = func(filePath string) (err error) {
+	_, err = os.Stat(filePath)
+	return
+}
 
-var isFileNotExist = func(err error) bool {
-	return os.IsNotExist(err)
+var findVault = func(encodingkey string, filepath string) (vault.Vault, error) {
+	return vault.FindVault(encodingkey, filepath)
 }
 
 func init() {
@@ -37,7 +39,7 @@ func getPath() (string, error) {
 	if dir, err := getWorkingDirectory(); err == nil {
 		dir = string(dir + "/secret.txt")
 
-		if _, err := os.Stat(dir); isFileNotExist(err) {
+		if err := directoryStatus(dir); os.IsNotExist(err) {
 			return "", err
 		}
 		return dir, err
