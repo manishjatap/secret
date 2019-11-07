@@ -28,6 +28,17 @@ func init() {
 	}
 }
 
+func TestActualImplmentationFileAndScanner(t *testing.T) {
+	file, err := openFile("fake/path/test.txt", os.O_RDONLY, 0777)
+	assert.Error(t, err, "Expected : File not found error")
+
+	_, err = writeDataToFile(file, "fake-data")
+	assert.Error(t, err, "Expected : File pointer error")
+
+	scanner := getNewScanner(file)
+	assert.True(t, scanner != nil, "Expected : no nil response")
+}
+
 func TestSetSuccess(t *testing.T) {
 	mockOpenFile()
 	mockWriteDataToFile()
@@ -129,23 +140,6 @@ func TestFindVaultOpenFileError(t *testing.T) {
 		assert.Equalf(t, err.Error(), expectedErr, "Expected error : %v", expectedErr)
 	}
 }
-
-// func TestOpenFileFunction(t *testing.T) {
-// 	//Created temp file to test
-// 	filepath, _ := os.Getwd()
-// 	filepath = filepath + "/deleteMe.txt"
-// 	createFile, _ := os.Create(filepath)
-// 	createFile.Close()
-
-// 	if file, err := openFile(filepath, os.O_APPEND|os.O_WRONLY, 0777); err == nil {
-// 		defer file.Close()
-// 		if _, err := writeDataToFile(file, "file to be deleted"); err != nil {
-// 			log.Fatal(err)
-// 		}
-// 	} else {
-// 		log.Fatal(err)
-// 	}
-// }
 
 func initEncryptDataError(errMsg string) {
 	//init error
