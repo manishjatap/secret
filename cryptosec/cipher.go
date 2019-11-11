@@ -11,6 +11,26 @@ import (
 	"io"
 )
 
+var getNewCipher = func(key []byte) (cipher.Block, error) {
+	return aes.NewCipher(key)
+}
+
+var readFull = func(r io.Reader, buf []byte) (n int, err error) {
+	return io.ReadFull(r, buf)
+}
+
+var getNewCFBEncrypter = func(block cipher.Block, iv []byte) cipher.Stream {
+	return cipher.NewCFBEncrypter(block, iv)
+}
+
+var xorKeyStream = func(stream cipher.Stream, dst, src []byte) {
+	stream.XORKeyStream(dst, src)
+}
+
+var getNewCFBDecrypter = func(block cipher.Block, iv []byte) cipher.Stream {
+	return cipher.NewCFBDecrypter(block, iv)
+}
+
 // Encrypt will take in a key and plaintext and return a hex representation
 // of the encrypted value.
 // This code is based on the standard library examples at:
@@ -23,12 +43,12 @@ func Encrypt(key, plaintext string) (string, error) {
 
 	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 	iv := ciphertext[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+	if _, err := readFull(rand.Reader, iv); err != nil {
 		return "", err
 	}
 
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], []byte(plaintext))
+	stream := getNewCFBEncrypter(block, iv)
+	xorKeyStream(stream, ciphertext[aes.BlockSize:], []byte(plaintext))
 
 	return fmt.Sprintf("%x", ciphertext), nil
 }
@@ -54,10 +74,10 @@ func Decrypt(key, cipherHex string) (string, error) {
 	iv := ciphertext[:aes.BlockSize]
 	ciphertext = ciphertext[aes.BlockSize:]
 
-	stream := cipher.NewCFBDecrypter(block, iv)
+	stream := getNewCFBDecrypter(block, iv)
 
 	// XORKeyStream can work in-place if the two arguments are the same.
-	stream.XORKeyStream(ciphertext, ciphertext)
+	xorKeyStream(stream, ciphertext, ciphertext)
 	return string(ciphertext), nil
 }
 
@@ -65,5 +85,5 @@ func newCipherBlock(key string) (cipher.Block, error) {
 	hasher := md5.New()
 	fmt.Fprint(hasher, key)
 	cipherKey := hasher.Sum(nil)
-	return aes.NewCipher(cipherKey)
+	return getNewCipher(cipherKey)
 }
